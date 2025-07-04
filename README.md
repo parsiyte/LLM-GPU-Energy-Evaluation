@@ -4,17 +4,5 @@ These scripts are used for conducting the experiments and collecting the results
 
 ## Requirements
 
-To run these experiments, you will need to have the DEPO tool. Please make sure to clone or copy the `split` directory from the DEPO repository into the root of this repository folder. The scripts expect the following directory structure:
+To run these experiments, you will need to have the DEPO tool. Please make sure to clone or copy the `split` directory from the DEPO repository into the root of this repository folder.
 
-
-\`\`\`
-.
-├── experiment_runners/
-├── model_scripts/
-├── split/
-│   ├── build/
-│   └── profiling_injection/
-├── prepare_depo.sh
-├── ...
-└── README.md
-\`\`\` 
