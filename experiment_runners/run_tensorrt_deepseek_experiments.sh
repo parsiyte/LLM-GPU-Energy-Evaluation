@@ -20,8 +20,6 @@ huggingface-cli login --token "$HF_TOKEN"
 pip install vllm==0.8.4
 ../prepare_tensorrt.sh
 
-export CUDA_VISIBLE_DEVICES=0
-
 # Define the injection path dynamically
 INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
 

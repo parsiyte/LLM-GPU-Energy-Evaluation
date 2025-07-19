@@ -1,4 +1,4 @@
-\#!/bin/bash
+#!/bin/bash
 
 # === Install yq if not installed ===
 if ! command -v yq &> /dev/null; then
@@ -17,6 +17,7 @@ huggingface-cli login --token "$HF_TOKEN"
 # === Initial DEPO setup ===
 ../prepare_depo.sh
 pip install vllm==0.8.4
+export CUDA_VISIBLE_DEVICES=0
 
 # Define the injection path dynamically
 INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
@@ -42,7 +43,7 @@ declare -A test_phase_periods
 echo "=== Phase 1: Preparing all models ==="
 for model in "${models[@]}"; do
   echo "Preparing/Verifying model $model..."
-  model_script="./${model}.sh"
+  model_script="../model_scripts/${model}.sh"
   if [ ! -x "$model_script" ]; then
     echo "Error: $model_script not found or not executable. Skipping $model."
     continue
@@ -56,7 +57,7 @@ echo
 echo "=== Phase 2: Running No-Tuning and getting timings ==="
 for model in "${models[@]}"; do
   echo "--- Running No-Tuning for $model ---"
-  model_script="./${model}.sh"
+  model_script="../model_scripts/${model}.sh"
   if [ ! -x "$model_script" ]; then
     echo "Skipping $model as script was not found/executable in Phase 1."
     continue
@@ -123,7 +124,7 @@ echo
 echo "=== Phase 3: Running Experiments ==="
 for model in "${models[@]}"; do
   echo "--- Running Experiments for $model ---"
-  model_script="./${model}.sh"
+  model_script="../model_scripts/${model}.sh"
    if [ ! -x "$model_script" ]; then
     echo "Skipping $model as script was not found/executable in Phase 1."
     continue

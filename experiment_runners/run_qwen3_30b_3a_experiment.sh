@@ -18,6 +18,7 @@ huggingface-cli login --token "$HF_TOKEN"
 # === Initial DEPO setup ===
 ../prepare_depo.sh
 pip install vllm==0.8.4
+export CUDA_VISIBLE_DEVICES=0
 
 # Define the injection path dynamically
 INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
@@ -238,7 +239,7 @@ done
 
 # === Phase 4: Consolidate Results ===
 echo "=== Phase 4: Consolidating Results ==="
-final_results_dir="vllm_deepseek_longer_task_bbh_experiments" # Updated directory name
+final_results_dir="qwen3_30b_3a_experiments" # Updated directory name
 mkdir -p "$final_results_dir"
 
 echo "Moving results to $final_results_dir..."

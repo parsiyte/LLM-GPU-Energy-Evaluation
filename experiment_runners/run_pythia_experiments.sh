@@ -18,6 +18,7 @@ huggingface-cli login --token "$HF_TOKEN"
 # === Initial DEPO setup ===
 ../prepare_depo.sh
 pip install vllm==0.8.4
+export CUDA_VISIBLE_DEVICES=0
 
 # Define the injection path dynamically
 INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
@@ -49,19 +50,19 @@ declare -A test_phase_periods
 # echo "=== Phase 1: Preparing all models ==="
 # for model in "${models[@]}"; do
 #   echo "Preparing/Verifying model $model..."
-#   if [ ! -x "./${model}.sh" ]; then
-#     echo "Error: ./${model}.sh not found or not executable. Skipping $model."
+#   if [ ! -x "../model_scripts/${model}.sh" ]; then
+#     echo "Error: ../model_scripts/${model}.sh not found or not executable. Skipping $model."
 #     continue
 #   fi
 #   # Assuming the model script handles download/setup idempotently
-#   ./$model.sh > /dev/null 2>&1
+#   ../model_scripts/$model.sh > /dev/null 2>&1
 # done
 # echo "=== Phase 1: Finished preparing models ==="
 # echo
 echo "=== Phase 1: Prepare/Verify all models - SKIPPED ==="
 
 # === Phase 2: Run No-Tuning for all models and get timings ===
-echo "=== Phase 2: Running No-Tuning and getting timings ==="
+echo "=== Phase 2: Running No-Tuning and get timings ==="
 for model in "${models[@]}"; do
   echo "--- Running No-Tuning for $model ---"
   model_script="../model_scripts/${model}.sh"

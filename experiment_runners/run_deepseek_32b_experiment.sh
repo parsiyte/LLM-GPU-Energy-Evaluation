@@ -10,6 +10,7 @@ fi
 # === Initial environment setup ===
 ../prepare_depo.sh
 pip install vllm==0.8.4
+export CUDA_VISIBLE_DEVICES=0
 
 # Define the injection path dynamically
 INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
@@ -34,7 +35,6 @@ for metric in 0 1 2; do
       yq e -i ".doWaitPhase = $wait_phase" config.yaml
 
       # Run workload and DEPO
-      ../model_scripts/v_deepseek_32b.sh
       CUDA_INJECTION64_PATH=$INJECTION_PATH \
       ../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
 
@@ -58,7 +58,6 @@ for metric in 0 1 2; do
         yq e -i ".doWaitPhase = $wait_phase" config.yaml
 
         # Run workload and DEPO
-        ../model_scripts/v_deepseek_32b.sh
         CUDA_INJECTION64_PATH=$INJECTION_PATH \
         ../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
 
@@ -71,4 +70,18 @@ for metric in 0 1 2; do
     fi
   done
 done
+
+# === Phase 4: Consolidate Results ===
+echo "=== Phase 4: Consolidating Results ==="
+final_results_dir="deepseek_32b_experiments_results"
+mkdir -p "$final_results_dir"
+
+echo "Moving results to $final_results_dir..."
+if ls exp_* 1> /dev/null 2>&1; then
+    mv exp_* "$final_results_dir/" || echo "Warning: Failed to move some experiment folders."
+else
+    echo "Warning: No 'exp_*' folders found to move."
+fi
+
+echo "=== All phases finished ==="
 

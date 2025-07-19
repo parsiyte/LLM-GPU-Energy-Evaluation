@@ -256,7 +256,7 @@ done
 
 # === Phase 4: Consolidate Results ===
 echo "=== Phase 4: Consolidating Results ==="
-final_results_dir="quantized_llama_a4500_longer_task_results" # Updated directory name
+final_results_dir="quantized_llama_a4500_results" # Updated directory name
 mkdir -p "$final_results_dir"
 
 echo "Moving results to $final_results_dir..."
