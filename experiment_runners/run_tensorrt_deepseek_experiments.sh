@@ -17,7 +17,7 @@ huggingface-cli login --token "$HF_TOKEN"
 
 # === Initial DEPO setup ===
 ../prepare_depo.sh
-pip install vllm==0.8.4
+pip install vllm==0.9.2
 ../prepare_tensorrt.sh
 
 # Define the injection path dynamically

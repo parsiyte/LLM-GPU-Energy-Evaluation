@@ -9,7 +9,7 @@ fi
 
 # === Initial environment setup ===
 ../prepare_depo.sh
-pip install vllm==0.8.4
+pip install vllm==0.9.2
 export CUDA_VISIBLE_DEVICES=0
 
 
