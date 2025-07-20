@@ -23,7 +23,7 @@ pip install vllm==0.8.4
 export CUDA_VISIBLE_DEVICES=1
 
 # Define the injection path dynamically
-INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
+INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
 # === Define models ===
 models=(
@@ -78,7 +78,7 @@ for model in "${models[@]}"; do
   START=$(date +%s)
   # Run with DEPO --no-tuning, redirect stdout to EP_stdout, stderr to /dev/null
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
-  ../split/build/apps/DEPO/DEPO --no-tuning --gpu 0 "$model_script" > "$output_file" 2>/dev/null
+  ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 0 "$model_script" > "$output_file" 2>/dev/null
   END=$(date +%s)
   total_time=$((END - START))
   periodic_time=$((total_time / 3))
@@ -184,7 +184,7 @@ for model in "${models[@]}"; do
 
       # Run DEPO experiment
       CUDA_INJECTION64_PATH=$INJECTION_PATH \
-      ../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 0 "$model_script"
+      ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 0 "$model_script"
 
       # Move/Copy results into the specific experiment folder
       echo "Saving results to $exp_folder_path..."
@@ -226,7 +226,7 @@ for model in "${models[@]}"; do
 
     # Run DEPO experiment
     CUDA_INJECTION64_PATH=$INJECTION_PATH \
-    ../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 0 "$model_script"
+    ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 0 "$model_script"
 
     # Move/Copy results into the specific experiment folder
     echo "Saving results to $exp_folder_path..."

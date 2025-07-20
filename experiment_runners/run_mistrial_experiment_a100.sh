@@ -20,7 +20,7 @@ pip install vllm==0.8.4
 export CUDA_VISIBLE_DEVICES=0
 
 # Define the injection path dynamically
-INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
+INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
 nvidia-smi -pm 1
 
@@ -73,7 +73,7 @@ for model in "${models[@]}"; do
   echo "Profiling application time for $model (no tuning)..."
   START=$(date +%s)
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
-  ../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
+  ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
   END=$(date +%s)
   total_time=$((END - START))
   periodic_time=$((total_time / 3))
@@ -165,7 +165,7 @@ for model in "${models[@]}"; do
       rm -rf gpu_experiment_* kernels_count redirected.txt
 
       CUDA_INJECTION64_PATH=$INJECTION_PATH \
-      ../split/build/apps/DEPO/DEPO --gss --gpu 1 ${metrics[$metric_idx]} "$model_script"
+      ../../split/build/apps/DEPO/DEPO --gss --gpu 1 ${metrics[$metric_idx]} "$model_script"
 
       echo "Saving results to $exp_folder_path..."
       if compgen -G "gpu_experiment_*" > /dev/null; then
@@ -203,7 +203,7 @@ for model in "${models[@]}"; do
     rm -rf gpu_experiment_* kernels_count redirected.txt
 
     CUDA_INJECTION64_PATH=$INJECTION_PATH \
-    ../split/build/apps/DEPO/DEPO --gss --gpu 1 ${metrics[$metric_idx]} "$model_script"
+    ../../split/build/apps/DEPO/DEPO --gss --gpu 1 ${metrics[$metric_idx]} "$model_script"
 
     echo "Saving results to $exp_folder_path..."
     if compgen -G "gpu_experiment_*" > /dev/null; then

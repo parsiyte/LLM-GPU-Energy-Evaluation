@@ -12,8 +12,9 @@ fi
 pip install vllm==0.8.4
 export CUDA_VISIBLE_DEVICES=0
 
+
 # Define the injection path dynamically
-INJECTION_PATH="$(cd .. && pwd)/split/profiling_injection/libinjection_2.so"
+INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
 # === Define metrics and corresponding flags ===
 declare -A metrics
@@ -36,7 +37,7 @@ for metric in 0 1 2; do
 
       # Run workload and DEPO
       CUDA_INJECTION64_PATH=$INJECTION_PATH \
-      ../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
+      ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
 
       # Store results
       folder_name="exp_${metrics[$metric]##--}_${label}"
@@ -59,7 +60,7 @@ for metric in 0 1 2; do
 
         # Run workload and DEPO
         CUDA_INJECTION64_PATH=$INJECTION_PATH \
-        ../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
+        ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
 
         # Store results
         folder_name="exp_${metrics[$metric]##--}_${label}"
