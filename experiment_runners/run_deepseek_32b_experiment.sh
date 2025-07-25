@@ -16,61 +16,116 @@ export CUDA_VISIBLE_DEVICES=0
 # Define the injection path dynamically
 INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
-# === Define metrics and corresponding flags ===
+# === Define model ===
+model="v_deepseek_32b"
+model_script="../model_scripts/${model}.sh"
+
+# === Define metrics and flags ===
 declare -A metrics
 metrics[0]="--en"
 metrics[1]="--edp"
 metrics[2]="--eds"
 
-# === Loop through combinations ===
+# === Phase 2: Run No-Tuning and get timings ===
+echo "=== Phase 2: Running No-Tuning and getting timings for $model ==="
+none_tuning_dir="none_tuning_${model}"
+mkdir -p "$none_tuning_dir"
+output_file="${none_tuning_dir}/EP_stdout"
+
+# Clean up potential leftovers
+rm -rf gpu_experiment_* kernels_count redirected.txt
+
+echo "Profiling application time for $model (no tuning)..."
+START=$(date +%s)
+CUDA_INJECTION64_PATH=$INJECTION_PATH \
+../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
+END=$(date +%s)
+total_time=$((END - START))
+periodic_time=$((total_time / 3))
+
+if [ "$total_time" -lt 3 ]; then
+    echo "Warning: Total time ($total_time sec) is very short. Setting periodic time to 1 sec."
+    periodic_time=1
+fi
+echo "App time (no tuning) = $total_time sec -> periodic = $periodic_time sec"
+
+# Set TestPhasePeriod for this model's experiments
+test_phase_period=12800
+echo "TestPhasePeriod will be $test_phase_period ms."
+
+# Save no-tuning results
+echo "Saving no-tuning results to $none_tuning_dir..."
+cp config.yaml "$none_tuning_dir/"
+if [ -f kernels_count ]; then cp kernels_count "$none_tuning_dir/"; rm -f kernels_count; fi
+if compgen -G "gpu_experiment_*" > /dev/null; then mv gpu_experiment_* "$none_tuning_dir/"; fi
+if [ -f redirected.txt ]; then cp redirected.txt "$none_tuning_dir/"; rm -f redirected.txt; fi
+echo "--- Finished No-Tuning for $model ---"
+echo
+
+# === Phase 3: Run Experiments ===
+echo "=== Phase 3: Running Experiments for $model ==="
+echo "Using Periodic Time: $periodic_time sec, Test Phase Period: $test_phase_period ms"
+
+# Set the msTestPhasePeriod for this model's experiments
+yq e -i ".msTestPhasePeriod = $test_phase_period" config.yaml
+
+experiments_parent_dir="${model}_experiments"
+mkdir -p "$experiments_parent_dir"
+
 for metric in 0 1 2; do
-  for periodic in 0 250; do
-    if [ "$periodic" -eq 0 ]; then
-      # Only non-periodic, doWaitPhase doesn't matter here
-      wait_phase=0
-      label="none"
-      
-      # Update config
-      yq e -i ".targetMetric = $metric" config.yaml
-      yq e -i ".repeatTuningPeriodInSec = $periodic" config.yaml
-      yq e -i ".doWaitPhase = $wait_phase" config.yaml
-
-      # Run workload and DEPO
-      CUDA_INJECTION64_PATH=$INJECTION_PATH \
-      ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
-
-      # Store results
-      folder_name="exp_${metrics[$metric]##--}_${label}"
-      mkdir "$folder_name"
-      mv gpu_experiment_* "$folder_name"
-      cp redirected.txt kernels_count config.yaml "$folder_name"
-
+  # Periodic experiments
+  for wait_phase in 0 1; do
+    if [ "$wait_phase" -eq 0 ]; then
+      label="periodic_nowait"
     else
-      for wait_phase in 0 1; do
-        if [ "$wait_phase" -eq 0 ]; then
-          label="periodic_nowait"
-        else
-          label="periodic_wait"
-        fi
-
-        # Update config
-        yq e -i ".targetMetric = $metric" config.yaml
-        yq e -i ".repeatTuningPeriodInSec = $periodic" config.yaml
-        yq e -i ".doWaitPhase = $wait_phase" config.yaml
-
-        # Run workload and DEPO
-        CUDA_INJECTION64_PATH=$INJECTION_PATH \
-        ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 ../model_scripts/v_deepseek_32b.sh
-
-        # Store results
-        folder_name="exp_${metrics[$metric]##--}_${label}"
-        mkdir "$folder_name"
-        mv gpu_experiment_* "$folder_name"
-        cp redirected.txt kernels_count config.yaml "$folder_name"
-      done
+      label="periodic_wait"
     fi
+
+    yq e -i ".targetMetric = $metric" config.yaml
+    yq e -i ".repeatTuningPeriodInSec = $periodic_time" config.yaml
+    yq e -i ".doWaitPhase = $wait_phase" config.yaml
+
+    folder_name="exp_${metrics[$metric]##--}_$label"
+    exp_folder_path="${experiments_parent_dir}/${folder_name}"
+    mkdir -p "$exp_folder_path"
+
+    echo "Running experiment: $folder_name"
+    rm -rf gpu_experiment_* kernels_count redirected.txt
+    
+    CUDA_INJECTION64_PATH=$INJECTION_PATH \
+    ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 "$model_script"
+
+    echo "Saving results to $exp_folder_path..."
+    if compgen -G "gpu_experiment_*" > /dev/null; then mv gpu_experiment_* "$exp_folder_path/"; fi
+    if [ -f redirected.txt ]; then cp redirected.txt "$exp_folder_path/"; rm -f redirected.txt; fi
+    if [ -f kernels_count ]; then cp kernels_count "$exp_folder_path/"; rm -f kernels_count; fi
+    cp config.yaml "$exp_folder_path/"
   done
+
+  # Non-periodic experiment
+  label="none"
+  yq e -i ".targetMetric = $metric" config.yaml
+  yq e -i ".repeatTuningPeriodInSec = 0" config.yaml
+  yq e -i ".doWaitPhase = 0" config.yaml
+
+  folder_name="exp_${metrics[$metric]##--}_$label"
+  exp_folder_path="${experiments_parent_dir}/${folder_name}"
+  mkdir -p "$exp_folder_path"
+
+  echo "Running experiment: $folder_name"
+  rm -rf gpu_experiment_* kernels_count redirected.txt
+  
+  CUDA_INJECTION64_PATH=$INJECTION_PATH \
+  ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu 1 "$model_script"
+
+  echo "Saving results to $exp_folder_path..."
+  if compgen -G "gpu_experiment_*" > /dev/null; then mv gpu_experiment_* "$exp_folder_path/"; fi
+  if [ -f redirected.txt ]; then cp redirected.txt "$exp_folder_path/"; rm -f redirected.txt; fi
+  if [ -f kernels_count ]; then cp kernels_count "$exp_folder_path/"; rm -f kernels_count; fi
+  cp config.yaml "$exp_folder_path/"
 done
+echo "--- Finished Experiments for $model ---"
+echo
 
 # === Phase 4: Consolidate Results ===
 echo "=== Phase 4: Consolidating Results ==="
@@ -78,11 +133,12 @@ final_results_dir="deepseek_32b_experiments_results"
 mkdir -p "$final_results_dir"
 
 echo "Moving results to $final_results_dir..."
-if ls exp_* 1> /dev/null 2>&1; then
-    mv exp_* "$final_results_dir/" || echo "Warning: Failed to move some experiment folders."
-else
-    echo "Warning: No 'exp_*' folders found to move."
-fi
+if [ -d "$none_tuning_dir" ]; then mv "$none_tuning_dir" "$final_results_dir/"; fi
+if [ -d "$experiments_parent_dir" ]; then mv "$experiments_parent_dir" "$final_results_dir/"; fi
+
+# Reset msTestPhasePeriod in config
+echo "Resetting msTestPhasePeriod to 6400"
+yq e -i ".msTestPhasePeriod = 6400" config.yaml
 
 echo "=== All phases finished ==="
 

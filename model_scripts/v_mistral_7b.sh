@@ -1,7 +1,7 @@
 #!/bin/bash
 lm_eval \
   --model vllm \
-  --model_args pretrained="mistralai/Mistral-7B-Instruct-v0.3",dtype=auto,max_model_len=4096,tensor_parallel_size=1,add_bos_token=True \
+  --model_args pretrained="/data/lm-evaluation-harness/Mistral-7B-Instruct-v0.3",dtype=auto,max_model_len=4096,tensor_parallel_size=1,add_bos_token=True \
   --tasks gsm8k \
   --batch_size auto \
 

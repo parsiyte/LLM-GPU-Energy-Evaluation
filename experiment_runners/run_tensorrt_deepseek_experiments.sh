@@ -39,19 +39,19 @@ declare -A periodic_times
 declare -A test_phase_periods
 
 # === Phase 1: Prepare/Verify all models ===
-echo "=== Phase 1: Preparing all models ==="
-for model in "${models[@]}"; do
-  echo "Preparing/Verifying model $model..."
-  model_script="../model_scripts/${model}.sh"
-  if [ ! -x "$model_script" ]; then
-    echo "Error: $model_script not found or not executable. Skipping $model."
-    continue
-  fi
-  # Assuming the model script handles download/setup idempotently
-  "$model_script" > /dev/null 2>&1
-done
-echo "=== Phase 1: Finished preparing models ==="
-echo
+#echo "=== Phase 1: Preparing all models ==="
+#for model in "${models[@]}"; do
+#  echo "Preparing/Verifying model $model..."
+#  model_script="../model_scripts/${model}.sh"
+#  if [ ! -x "$model_script" ]; then
+#    echo "Error: $model_script not found or not executable. Skipping $model."
+#    continue
+#  fi
+#  # Assuming the model script handles download/setup idempotently
+#  "$model_script" > /dev/null 2>&1
+#done
+#echo "=== Phase 1: Finished preparing models ==="
+#echo
 
 # === Phase 2: Run No-Tuning for all models and get timings ===
 echo "=== Phase 2: Running No-Tuning and getting timings ==="
@@ -152,7 +152,7 @@ for model in "${models[@]}"; do
   echo "Using Periodic Time: $current_periodic_time sec, Test Phase Period: $current_test_phase_period ms"
 
   # Set the base msTestPhasePeriod for this model's experiments
-  yq e -i ".msTestPhasePeriod = $current_test_phase_period" config.yaml
+  yq e -i ".msTestPhasePeriod = 12800" config.yaml
 
   experiments_parent_dir="${model}_experiments"
   mkdir -p "$experiments_parent_dir"
@@ -251,6 +251,10 @@ for model in "${models[@]}"; do
   echo "--- Finished Experiments for $model ---"
   echo
 done
+
+# Reset msTestPhasePeriod in config at the end of all model experiments
+echo "Resetting msTestPhasePeriod to 6400"
+yq e -i ".msTestPhasePeriod = 6400" config.yaml
 
 # === Phase 4: Consolidate Results ===
 echo "=== Phase 4: Consolidating Results ==="
