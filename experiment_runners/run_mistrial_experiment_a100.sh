@@ -144,6 +144,13 @@ for model in "${models[@]}"; do
   experiments_parent_dir="${model}_experiments"
   mkdir -p "$experiments_parent_dir"
 
+  # Move the no-tuning results into the main experiments folder for this model
+  none_tuning_dir="none_tuning_${model}"
+  if [ -d "$none_tuning_dir" ]; then
+    echo "Moving $none_tuning_dir into $experiments_parent_dir..."
+    mv "$none_tuning_dir" "$experiments_parent_dir/"
+  fi
+
   for metric_idx in 0 1 2; do
     for wait_phase in 0 1; do
       label=""
@@ -243,15 +250,7 @@ echo "Moving results to $final_results_dir..."
 
 model_name="v_mistral_7b" # Explicitly set for clarity, or could be derived if models array had more
 
-none_tuning_dir_to_move="none_tuning_${model_name}"
 experiments_parent_dir_to_move="${model_name}_experiments"
-
-if [ -d "$none_tuning_dir_to_move" ]; then
-  echo "Moving $none_tuning_dir_to_move to $final_results_dir/"
-  mv "$none_tuning_dir_to_move" "$final_results_dir/" || echo "Warning: Failed to move $none_tuning_dir_to_move"
-else
-  echo "Warning: Directory $none_tuning_dir_to_move not found."
-fi
 
 if [ -d "$experiments_parent_dir_to_move" ]; then
   echo "Moving $experiments_parent_dir_to_move to $final_results_dir/"

@@ -160,6 +160,13 @@ for model in "${models[@]}"; do
   experiments_parent_dir="${model}_experiments"
   mkdir -p "$experiments_parent_dir"
 
+  # Move the no-tuning results into the main experiments folder for this model
+  none_tuning_dir="none_tuning_${model}"
+  if [ -d "$none_tuning_dir" ]; then
+    echo "Moving $none_tuning_dir into $experiments_parent_dir..."
+    mv "$none_tuning_dir" "$experiments_parent_dir/"
+  fi
+
   for metric in 0 1 2; do
     for wait_phase in 0 1; do # Periodic loops
       if [ "$wait_phase" -eq 0 ]; then
@@ -262,15 +269,7 @@ mkdir -p "$final_results_dir"
 
 echo "Moving results to $final_results_dir..."
 for model in "${models[@]}"; do
-  none_tuning_dir="none_tuning_${model}"
   experiments_parent_dir="${model}_experiments"
-
-  if [ -d "$none_tuning_dir" ]; then
-    echo "Moving $none_tuning_dir..."
-    mv "$none_tuning_dir" "$final_results_dir/" || echo "Warning: Failed to move $none_tuning_dir"
-  else
-    echo "Warning: Directory $none_tuning_dir not found for model $model."
-  fi
 
   if [ -d "$experiments_parent_dir" ]; then
     echo "Moving $experiments_parent_dir..."

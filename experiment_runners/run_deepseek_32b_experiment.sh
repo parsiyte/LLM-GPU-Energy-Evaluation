@@ -72,6 +72,12 @@ yq e -i ".msTestPhasePeriod = $test_phase_period" config.yaml
 experiments_parent_dir="${model}_experiments"
 mkdir -p "$experiments_parent_dir"
 
+# Move the no-tuning results into the main experiments folder for this model
+if [ -d "$none_tuning_dir" ]; then
+  echo "Moving $none_tuning_dir into $experiments_parent_dir..."
+  mv "$none_tuning_dir" "$experiments_parent_dir/"
+fi
+
 for metric in 0 1 2; do
   # Periodic experiments
   for wait_phase in 0 1; do
@@ -133,7 +139,6 @@ final_results_dir="deepseek_32b_experiments_results"
 mkdir -p "$final_results_dir"
 
 echo "Moving results to $final_results_dir..."
-if [ -d "$none_tuning_dir" ]; then mv "$none_tuning_dir" "$final_results_dir/"; fi
 if [ -d "$experiments_parent_dir" ]; then mv "$experiments_parent_dir" "$final_results_dir/"; fi
 
 # Reset msTestPhasePeriod in config
