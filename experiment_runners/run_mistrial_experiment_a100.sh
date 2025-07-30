@@ -79,7 +79,7 @@ for model in "${models[@]}"; do
   echo "Profiling application time for $model (no tuning)..."
   echo "Resetting GPU and running max_gpu.py..."
   nvidia-smi -r
-  python3 ../../max_gpu.py 10
+  timeout 10 python3 ../../max_gpu.py
   START=$(date +%s)
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
   ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
