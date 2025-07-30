@@ -75,7 +75,7 @@ for i in $(seq 1 $TOTAL_RUNS); do
     mv llama_tensorrt_a4500_results "$RUN_DIR/tensorrt_llama_a4500_results"
 
     echo "--- Running TensorRT Llama Experiment on A100 (Run $i) ---"
-    ./run_tensorrt_a100_llama_experiment.sh
+    ./run_tensort_a100_llama_experiment.sh
     # Consolidate TensorRT Llama results
     mv llama_tensorrt_a100_results "$RUN_DIR/tensorrt_llama_a100_results"
 

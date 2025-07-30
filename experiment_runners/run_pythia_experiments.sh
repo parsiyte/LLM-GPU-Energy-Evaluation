@@ -17,7 +17,7 @@ huggingface-cli login --token "$HF_TOKEN"
 
 # === Initial DEPO setup ===
 ../prepare_depo.sh
-pip install vllm==0.9.2
+pip install vllm==0.8.4
 export CUDA_VISIBLE_DEVICES=0
 
 # Define the injection path dynamically
@@ -79,7 +79,16 @@ for model in "${models[@]}"; do
   echo "Cleaning up leftovers..."
   rm -rf gpu_experiment_* kernels_count redirected.txt
 
+  echo "Setting default config for no-tuning run..."
+  yq e -i ".msTestPhasePeriod = 6400" config.yaml
+  yq e -i ".repeatTuningPeriodInSec = 0" config.yaml
+  yq e -i ".doWaitPhase = 0" config.yaml
+  yq e -i ".targetMetric = 0" config.yaml
+
   echo "Profiling application time for $model (no tuning)..."
+  echo "Resetting GPU and running max_gpu.py..."
+  nvidia-smi -r
+  python3 ../../max_gpu.py 10
   START=$(date +%s)
   # Run with DEPO --no-tuning, redirect stdout to EP_stdout, stderr to /dev/null
   CUDA_INJECTION64_PATH=$INJECTION_PATH \

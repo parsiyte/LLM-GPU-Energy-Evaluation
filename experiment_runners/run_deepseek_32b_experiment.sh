@@ -9,7 +9,7 @@ fi
 
 # === Initial environment setup ===
 ../prepare_depo.sh
-pip install vllm==0.9.2
+pip install vllm==0.8.4
 export CUDA_VISIBLE_DEVICES=0
 
 
@@ -35,7 +35,16 @@ output_file="${none_tuning_dir}/EP_stdout"
 # Clean up potential leftovers
 rm -rf gpu_experiment_* kernels_count redirected.txt
 
+echo "Setting default config for no-tuning run..."
+yq e -i ".msTestPhasePeriod = 6400" config.yaml
+yq e -i ".repeatTuningPeriodInSec = 0" config.yaml
+yq e -i ".doWaitPhase = 0" config.yaml
+yq e -i ".targetMetric = 0" config.yaml
+
 echo "Profiling application time for $model (no tuning)..."
+echo "Resetting GPU and running max_gpu.py..."
+nvidia-smi -r
+python3 ../../max_gpu.py 10
 START=$(date +%s)
 CUDA_INJECTION64_PATH=$INJECTION_PATH \
 ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
