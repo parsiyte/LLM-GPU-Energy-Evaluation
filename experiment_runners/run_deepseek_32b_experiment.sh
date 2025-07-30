@@ -61,7 +61,7 @@ CUDA_INJECTION64_PATH=$INJECTION_PATH \
 ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
 END=$(date +%s)
 total_time=$((END - START))
-periodic_time=$((total_time / 3))
+periodic_time=$((total_time / 6))
 
 if [ "$total_time" -lt 3 ]; then
     echo "Warning: Total time ($total_time sec) is very short. Setting periodic time to 1 sec."
