@@ -9,14 +9,16 @@ set -e
 echo "Running Pythia Experiments..."
 ./run_pythia_experiments.sh
 
-# --- Run Llama Experiment ---
-echo "Running Llama Experiment..."
+# --- Run Llama Experiment (A100) ---
+echo "Running Llama Experiment (A100)..."
 ./run_llama_experiment.sh
 
+# --- Run Llama Experiment (A4500) ---
+echo "Running Llama Experiment (A4500)..."
+./run_llama_experiments_a4500.sh
 
-
-# --- Run Quantized Llama Experiments ---
-echo "Running Quantized Llama Experiments..."
+# --- Run Quantized Llama Experiments (A4500) ---
+echo "Running Quantized Llama Experiments (A4500)..."
 ./run_quantized_llama_experiments.sh
 
 # --- Run Mistral Experiment on A100 ---
@@ -35,8 +37,12 @@ echo "Running Qwen3 30B 3A Experiment..."
 echo "Running TensorRT Deepseek Experiments..."
 ./run_tensorrt_deepseek_experiments.sh
 
-# --- Run TensorRT Llama Experiment ---
-echo "Running TensorRT Llama Experiment..."
-./run_tensorrt_llama_experiment.sh
+# --- Run TensorRT Llama Experiment (A100) ---
+echo "Running TensorRT Llama Experiment (A100)..."
+./run_tensort_a100_llama_experiment.sh
 
-echo "All experiments completed successfully." 
+# --- Run TensorRT Llama Experiment (A4500) ---
+echo "Running TensorRT Llama Experiment (A4500)..."
+./run_tensorrt_a4500_llama_experiment.sh
+
+echo "All experiments completed successfully."

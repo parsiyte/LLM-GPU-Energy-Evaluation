@@ -23,6 +23,10 @@ export CUDA_VISIBLE_DEVICES=0
 # Define the injection path dynamically
 INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
+# === Reboot GPU ===
+echo "Rebooting GPU..."
+nvidia-smi -r
+
 # === Define models ===
 models=(
   "pythia_14m"
@@ -46,20 +50,19 @@ metrics[2]="--eds"
 declare -A periodic_times
 declare -A test_phase_periods
 
-# === Phase 1: Prepare/Verify all models (SKIPPED) ===
-# echo "=== Phase 1: Preparing all models ==="
-# for model in "${models[@]}"; do
-#   echo "Preparing/Verifying model $model..."
-#   if [ ! -x "../model_scripts/${model}.sh" ]; then
-#     echo "Error: ../model_scripts/${model}.sh not found or not executable. Skipping $model."
-#     continue
-#   fi
-#   # Assuming the model script handles download/setup idempotently
-#   ../model_scripts/$model.sh > /dev/null 2>&1
-# done
-# echo "=== Phase 1: Finished preparing models ==="
-# echo
-echo "=== Phase 1: Prepare/Verify all models - SKIPPED ==="
+# === Phase 1: Prepare/Verify all models ===
+echo "=== Phase 1: Preparing all models ==="
+for model in "${models[@]}"; do
+  echo "Preparing/Verifying model $model..."
+  if [ ! -x "../model_scripts/${model}.sh" ]; then
+    echo "Error: ../model_scripts/${model}.sh not found or not executable. Skipping $model."
+    continue
+  fi
+  # Assuming the model script handles download/setup idempotently
+  ../model_scripts/$model.sh > /dev/null 2>&1
+done
+echo "=== Phase 1: Finished preparing models ==="
+echo
 
 # === Phase 2: Run No-Tuning for all models and get timings ===
 echo "=== Phase 2: Running No-Tuning and get timings ==="
@@ -86,9 +89,6 @@ for model in "${models[@]}"; do
   yq e -i ".targetMetric = 0" config.yaml
 
   echo "Profiling application time for $model (no tuning)..."
-  echo "Resetting GPU and running max_gpu.py..."
-  nvidia-smi -r
-  timeout 10 python3 ../../max_gpu.py
   START=$(date +%s)
   # Run with DEPO --no-tuning, redirect stdout to EP_stdout, stderr to /dev/null
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
@@ -294,15 +294,3 @@ for model in "${models[@]}"; do
 done
 
 echo "=== All phases finished ==="
-
-
-
-
-
-
-
-
-
-
-
-

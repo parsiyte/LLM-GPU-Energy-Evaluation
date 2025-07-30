@@ -12,9 +12,12 @@ fi
 pip install vllm==0.8.4
 export CUDA_VISIBLE_DEVICES=0
 
-
 # Define the injection path dynamically
 INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
+
+# === Reboot GPU ===
+echo "Rebooting GPU..."
+nvidia-smi -r
 
 # === Define model ===
 model="v_deepseek_32b"
@@ -25,6 +28,17 @@ declare -A metrics
 metrics[0]="--en"
 metrics[1]="--edp"
 metrics[2]="--eds"
+
+# === Phase 1: Prepare/Verify model ===
+echo "=== Phase 1: Preparing model $model ==="
+if [ ! -x "$model_script" ]; then
+  echo "Error: $model_script not found or not executable."
+  exit 1
+fi
+# Assuming the model script handles download/setup idempotently
+"$model_script" > /dev/null 2>&1
+echo "=== Phase 1: Finished preparing model ==="
+echo
 
 # === Phase 2: Run No-Tuning and get timings ===
 echo "=== Phase 2: Running No-Tuning and getting timings for $model ==="
@@ -42,9 +56,6 @@ yq e -i ".doWaitPhase = 0" config.yaml
 yq e -i ".targetMetric = 0" config.yaml
 
 echo "Profiling application time for $model (no tuning)..."
-echo "Resetting GPU and running max_gpu.py..."
-nvidia-smi -r
-timeout 10 python3 ../../max_gpu.py
 START=$(date +%s)
 CUDA_INJECTION64_PATH=$INJECTION_PATH \
 ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
@@ -155,4 +166,3 @@ echo "Resetting msTestPhasePeriod to 6400"
 yq e -i ".msTestPhasePeriod = 6400" config.yaml
 
 echo "=== All phases finished ==="
-
