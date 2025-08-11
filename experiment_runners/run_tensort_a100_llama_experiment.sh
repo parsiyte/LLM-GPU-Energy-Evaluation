@@ -90,7 +90,7 @@ for model in "${models[@]}"; do
   ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
   END=$(date +%s)
   total_time=$((END - START))
-  periodic_time=$((total_time / 6))
+  periodic_time=$((total_time / 3))
 
   # Handle potential division by zero or very short times
   if [ "$total_time" -lt 3 ]; then
