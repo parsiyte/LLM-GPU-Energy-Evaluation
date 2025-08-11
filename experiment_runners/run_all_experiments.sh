@@ -10,9 +10,9 @@ echo "Running Pythia Experiments..."
 ./run_pythia_experiments.sh
 
 # --- Run Llama Experiment (A100) ---
-echo "Running Llama Experiment (A100)..."
+echo "Running Llama Experiments (A100)..."
 ./run_llama_experiment.sh
-
+./run_llama_bbh_experiments.sh
 # --- Run Llama Experiment (A4500) ---
 echo "Running Llama Experiment (A4500)..."
 ./run_llama_experiments_a4500.sh
@@ -34,15 +34,15 @@ echo "Running Qwen3 30B 3A Experiment..."
 ./run_qwen3_30b_3a_experiment.sh
 
 # --- Run TensorRT Deepseek Experiments ---
-echo "Running TensorRT Deepseek Experiments..."
-./run_tensorrt_deepseek_experiments.sh
+echo "Running TensorRT Deepseek Experiments... SKIPPED"
+#./run_tensorrt_deepseek_experiments.sh
 
 # --- Run TensorRT Llama Experiment (A100) ---
-echo "Running TensorRT Llama Experiment (A100)..."
-./run_tensort_a100_llama_experiment.sh
+echo "Running TensorRT Llama Experiment (A100)... SKIPPED"
+#./run_tensort_a100_llama_experiment.sh
 
 # --- Run TensorRT Llama Experiment (A4500) ---
-echo "Running TensorRT Llama Experiment (A4500)..."
-./run_tensorrt_a4500_llama_experiment.sh
+echo "Running TensorRT Llama Experiment (A4500)... SKIPPED"
+#./run_tensorrt_a4500_llama_experiment.sh
 
 echo "All experiments completed successfully."

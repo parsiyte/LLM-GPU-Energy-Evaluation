@@ -1,3 +1,9 @@
 #!/bin/bash
+apt -y install  gcc-11 g++-11
+update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
+update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
 apt install mpich -y
-pip install tensorrt-llm==0.20.0
+pip install lm_eval==0.4.8
+pip install numpy==1.26.4
+cd /data/lm-evaluation-harness/split/profiling_injection && ./build.sh
+
