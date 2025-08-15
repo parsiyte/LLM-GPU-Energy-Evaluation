@@ -15,12 +15,6 @@ export CUDA_VISIBLE_DEVICES=0
 # Define the injection path dynamically
 INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
-# Sampling config for Phase 2 baseline
-SAMPLE_INTERVAL_MS=200
-SAMPLE_DURATION_SEC=10
-# Match the CUDA_VISIBLE_DEVICES export
-NVIDIA_SMI_GPU_INDEX=0
-
 # === Reboot GPU ===
 echo "Rebooting GPU..."
 nvidia-smi -r
@@ -51,7 +45,6 @@ echo "=== Phase 2: Running No-Tuning and getting timings for $model ==="
 none_tuning_dir="none_tuning_${model}"
 mkdir -p "$none_tuning_dir"
 output_file="${none_tuning_dir}/EP_stdout"
-smi_outfile="${none_tuning_dir}/${model}_smi_log.csv"
 
 # Clean up potential leftovers
 rm -rf gpu_experiment_* kernels_count redirected.txt
@@ -64,17 +57,11 @@ yq e -i ".targetMetric = 0" config.yaml
 
 echo "Profiling application time for $model (no tuning)..."
 # Start nvidia-smi sampling in background
-timeout "${SAMPLE_DURATION_SEC}s" nvidia-smi -i "$NVIDIA_SMI_GPU_INDEX" \
-  --query-gpu=utilization.gpu,utilization.memory,memory.used \
-  --format=csv,nounits -lms "$SAMPLE_INTERVAL_MS" >> "$smi_outfile" 2>/dev/null &
-sampler_pid=$!
-
 START=$(date +%s)
 CUDA_INJECTION64_PATH=$INJECTION_PATH \
 ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
 END=$(date +%s)
 # Ensure sampler finishes (or is already done)
-wait $sampler_pid 2>/dev/null || true
 total_time=$((END - START))
 periodic_time=$((total_time / 6))
 

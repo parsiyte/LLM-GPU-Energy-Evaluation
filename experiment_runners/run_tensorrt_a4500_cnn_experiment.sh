@@ -79,7 +79,6 @@ for model in "${models[@]}"; do
   none_tuning_dir="none_tuning_${model}"
   mkdir -p "$none_tuning_dir"
   output_file="${none_tuning_dir}/EP_stdout"
-  smi_outfile="${none_tuning_dir}/${model}_smi_log.csv"
 
   # Clean up potential leftovers aggressively before the run
   echo "Cleaning up leftovers..."
@@ -93,18 +92,12 @@ for model in "${models[@]}"; do
 
   echo "Profiling application time for $model (no tuning)..."
   # Start nvidia-smi sampling in background for 10 seconds
-  timeout "${SAMPLE_DURATION_SEC}s" nvidia-smi -i "$NVIDIA_SMI_GPU_INDEX" \
-    --query-gpu=utilization.gpu,utilization.memory,memory.used \
-    --format=csv,nounits -lms "$SAMPLE_INTERVAL_MS" >> "$smi_outfile" 2>/dev/null &
-  sampler_pid=$!
-
   START=$(date +%s)
   # Run with DEPO --no-tuning, redirect stdout to EP_stdout, stderr to /dev/null
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
   ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 0 "$model_script" > "$output_file" 2>/dev/null
   END=$(date +%s)
   # Ensure sampler finishes (or is already done)
-  wait $sampler_pid 2>/dev/null || true
   total_time=$((END - START))
   periodic_time=$((total_time / 6))
 
