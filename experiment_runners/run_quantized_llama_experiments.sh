@@ -98,7 +98,7 @@ for model in "${models[@]}"; do
   END=$(date +%s)
   # Ensure sampler finishes (or is already done)
   total_time=$((END - START))
-  periodic_time=$((total_time / 6))
+  periodic_time=$((total_time / 3))
 
   # Handle potential division by zero or very short times
   if [ "$total_time" -lt 3 ]; then
