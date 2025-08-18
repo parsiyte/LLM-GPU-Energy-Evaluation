@@ -11,6 +11,9 @@ TOTAL_RUNS=4
 # Base directory for all experiment results
 BASE_RESULTS_DIR="a4500_model_experiments"
 
+# Reboot GPU
+nvidia-smi -r
+
 for i in $(seq 1 $TOTAL_RUNS); do
     echo "================================================="
     echo "Starting A4500 Experiment Run $i of $TOTAL_RUNS"

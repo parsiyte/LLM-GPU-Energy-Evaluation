@@ -23,12 +23,6 @@ export CUDA_VISIBLE_DEVICES=1
 # Define the injection path dynamically
 INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
-# Sampling config for Phase 2 baseline
-SAMPLE_INTERVAL_MS=200
-SAMPLE_DURATION_SEC=10
-# Match the DEPO --gpu index used below
-NVIDIA_SMI_GPU_INDEX=0
-
 # === Reboot GPU ===
 echo "Rebooting GPU..."
 nvidia-smi -r
