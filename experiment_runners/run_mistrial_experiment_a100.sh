@@ -26,7 +26,6 @@ INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 echo "Rebooting GPU..."
 nvidia-smi -r
 
-nvidia-smi -pm 1
 
 # === Define models ===
 models=(
@@ -81,11 +80,15 @@ for model in "${models[@]}"; do
   yq e -i ".targetMetric = 0" config.yaml
 
   echo "Profiling application time for $model (no tuning)..."
+  LOG_FILE="${none_tuning_dir}/${model}_no_tunning_log.csv"
+  nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i 0 > "$LOG_FILE" &
+  SMI_PID=$!
   # Start nvidia-smi sampling in background
   START=$(date +%s)
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
   ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
   END=$(date +%s)
+  kill $SMI_PID
   # Ensure sampler finishes (or is already done)
   total_time=$((END - START))
   periodic_time=$((total_time / 3))
