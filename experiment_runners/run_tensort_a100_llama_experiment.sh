@@ -84,17 +84,11 @@ for model in "${models[@]}"; do
   yq e -i ".targetMetric = 0" config.yaml
 
   echo "Profiling application time for $model (no tuning)..."
-  LOG_FILE="${none_tuning_dir}/${model}_no_tunning_log.csv"
-  nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i 1 > "$LOG_FILE" &
-  SMI_PID=$!
-  # Start nvidia-smi sampling in background
   START=$(date +%s)
   # Run with DEPO --no-tuning, redirect stdout to EP_stdout, stderr to /dev/null
   CUDA_INJECTION64_PATH=$INJECTION_PATH \
   ../../split/build/apps/DEPO/DEPO --no-tuning --gpu 1 "$model_script" > "$output_file" 2>/dev/null
   END=$(date +%s)
-  kill $SMI_PID
-  # Ensure sampler finishes (or is already done)
   total_time=$((END - START))
   periodic_time=$((total_time / 3))
 
