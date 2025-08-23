@@ -81,7 +81,7 @@ for model in "${models[@]}"; do
 
   echo "Profiling application time for $model (no tuning)..."
   LOG_FILE="${none_tuning_dir}/${model}_no_tunning_log.csv"
-  nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i 0 > "$LOG_FILE" &
+  nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i 1 > "$LOG_FILE" &
   SMI_PID=$!
   # Start nvidia-smi sampling in background
   START=$(date +%s)
