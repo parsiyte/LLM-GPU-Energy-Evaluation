@@ -59,25 +59,8 @@ run_profiling() {
     local model_results_dir="${BASE_RESULTS_DIR}/${model_name}_CUDA${cuda_device}"
     mkdir -p "$model_results_dir"
 
-    # --- Stage 1: Baseline (Model script only, no DEPO) ---
-    echo "--- Stage 1: Profiling Baseline for $model_name ---"
-    local baseline_dir="${model_results_dir}/baseline_profile"
-    mkdir -p "$baseline_dir"
-    local log_file="${baseline_dir}/${model_name}_baseline_gpu_log.csv"
-
-    echo "Starting nvidia-smi for baseline..."
-    nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i $gpu_id_smi > "$log_file" &
-    local smi_pid=$!
-
-    echo "Running model script for baseline..."
-    "$model_script" > "${baseline_dir}/model_stdout.log" 2>&1
-
-    kill $smi_pid
-    echo "--- Finished Stage 1: Baseline for $model_name ---"
-    echo
-
-    # --- Stage 2: No-Tuning Profile (with DEPO) ---
-    echo "--- Stage 2: Profiling No-Tuning for $model_name ---"
+    # --- No-Tuning Profile (with DEPO) ---
+    echo "--- Profiling No-Tuning for $model_name ---"
     local notuning_dir="${model_results_dir}/notuning_profile"
     mkdir -p "$notuning_dir"
     log_file="${notuning_dir}/${model_name}_notuning_gpu_log.csv"
@@ -90,7 +73,7 @@ run_profiling() {
     yq e -i ".targetMetric = 0" config.yaml
 
     echo "Starting nvidia-smi for no-tuning run..."
-    nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i $gpu_id_smi > "$log_file" &
+    nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -lms 500 -i $gpu_id_smi > "$log_file" &
     smi_pid=$!
     
     local start_time=$(date +%s)
@@ -105,12 +88,12 @@ run_profiling() {
     if [ "$periodic_time" -lt 1 ]; then periodic_time=1; fi
     echo "App time (no tuning) = $total_time sec -> periodic = $periodic_time sec"
     mv gpu_experiment_* kernels_count redirected.txt "$notuning_dir/" 2>/dev/null || true # Move any output files
-    echo "--- Finished Stage 2: No-Tuning for $model_name ---"
+    echo "--- Finished No-Tuning for $model_name ---"
     echo
 
-    # --- Stage 3: EDP Periodic Wait Profile (Conditional) ---
+    # --- EDP Periodic Wait Profile (Conditional) ---
     if [ "$run_special_edp_case" = true ]; then
-        echo "--- Stage 3: Profiling EDP Periodic Wait for $model_name ---"
+        echo "--- Profiling EDP Periodic Wait for $model_name ---"
         local edp_dir="${model_results_dir}/edp_periodic_wait_profile"
         mkdir -p "$edp_dir"
         log_file="${edp_dir}/${model_name}_edp_periodic_wait_gpu_log.csv"
@@ -121,7 +104,7 @@ run_profiling() {
         yq e -i ".doWaitPhase = 1" config.yaml # Wait phase ON
 
         echo "Starting nvidia-smi for EDP run..."
-        nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -l 10 -i $gpu_id_smi > "$log_file" &
+        nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used --format=csv -lms 500 -i $gpu_id_smi > "$log_file" &
         smi_pid=$!
 
         echo "Running DEPO with EDP, periodic tuning, and wait phase..."
@@ -130,7 +113,7 @@ run_profiling() {
 
         kill $smi_pid
         mv gpu_experiment_* kernels_count redirected.txt "$edp_dir/" 2>/dev/null || true
-        echo "--- Finished Stage 3: EDP Periodic Wait for $model_name ---"
+        echo "--- Finished EDP Periodic Wait for $model_name ---"
         echo
     fi
 }
