@@ -38,6 +38,23 @@ metrics[0]="--en"
 metrics[1]="--edp"
 metrics[2]="--eds"
 
+# --- Function to collect experiment results ---
+collect_results() {
+    local exp_folder_path=$1
+    local is_multigpu=$2
+
+    if [ "$is_multigpu" = true ]; then
+        echo "Collecting multi-GPU results..."
+        mv average_result.csv power_log.csv power_log.png \
+           power_log_gpu0.csv power_log_gpu0.png power_log_gpu1.csv power_log_gpu1.png \
+           result.csv summed_results.csv kernels_count redirected.txt "$exp_folder_path/" 2>/dev/null || true
+    else
+        echo "Collecting single-GPU results..."
+        mv gpu_experiment_* kernels_count redirected.txt "$exp_folder_path/" 2>/dev/null || true
+    fi
+    cp config.yaml "$exp_folder_path/"
+}
+
 # --- Function to run experiments for a given model ---
 run_experiments() {
     local model_name=$1
@@ -45,6 +62,10 @@ run_experiments() {
     local test_phase_period=$3
     local sample_divider=$4
     local final_results_dir="${model_name}_results"
+    local is_multigpu=false
+    if [[ "$depo_gpu_args" == *,* ]]; then
+        is_multigpu=true
+    fi
 
     echo "================================================="
     echo "Starting experiments for $model_name"
@@ -110,12 +131,11 @@ run_experiments() {
             yq e -i ".repeatTuningPeriodInSec = $periodic_time" config.yaml
             yq e -i ".doWaitPhase = $wait_phase" config.yaml
             
-            rm -rf gpu_experiment_* kernels_count redirected.txt
+            rm -rf gpu_experiment_*; rm -f kernels_count redirected.txt average_result.csv power_log.csv power_log.png power_log_gpu*.csv power_log_gpu*.png result.csv summed_results.csv
             CUDA_INJECTION64_PATH=$INJECTION_PATH \
-            ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" > /dev/null 2>&1
+            ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" > "${exp_folder_path}/EP_stdout" 2>&1
             
-            mv gpu_experiment_* kernels_count redirected.txt "$exp_folder_path/" 2>/dev/null || true
-            cp config.yaml "$exp_folder_path/"
+            collect_results "$exp_folder_path" "$is_multigpu"
         done
 
         # Non-periodic (one-shot) run
@@ -128,12 +148,11 @@ run_experiments() {
         yq e -i ".repeatTuningPeriodInSec = 0" config.yaml
         yq e -i ".doWaitPhase = 0" config.yaml
 
-        rm -rf gpu_experiment_* kernels_count redirected.txt
+        rm -rf gpu_experiment_*; rm -f kernels_count redirected.txt average_result.csv power_log.csv power_log.png power_log_gpu*.csv power_log_gpu*.png result.csv summed_results.csv
         CUDA_INJECTION64_PATH=$INJECTION_PATH \
-        ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" > /dev/null 2>&1
+        ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" > "${exp_folder_path}/EP_stdout" 2>&1
         
-        mv gpu_experiment_* kernels_count redirected.txt "$exp_folder_path/" 2>/dev/null || true
-        cp config.yaml "$exp_folder_path/"
+        collect_results "$exp_folder_path" "$is_multigpu"
     done
     echo "--- Finished main experiments for $model_name ---"
     echo
