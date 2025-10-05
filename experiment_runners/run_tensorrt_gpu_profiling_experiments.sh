@@ -19,7 +19,6 @@ huggingface-cli login --token "$HF_TOKEN"
 
 # === Initial DEPO setup ===
 echo "Preparing DEPO and TensorRT..."
-../prepare_depo.sh
 ../prepare_tensorrt.sh
 
 # Define the injection path dynamically
@@ -123,9 +122,10 @@ run_profiling() {
 # A100 Models (smi-id 1, cuda-dev 0, depo-gpu 1)
 declare -A a100_models_edp
 a100_models_edp["tensorrt_deepseek_32b"]=true
+a100_models_edp["tensorrt_llama_3_1_8b"]=true
 
 declare -a a100_models=(
-    "tensorrt_deepseek_32b" "tensorrt_llama_3_1_8b"
+    "tensorrt_deepseek_32b" "tensorrt_llama_3_1_8b" "tensorrt_cnn_llama_3_1_8b"
 )
 for model in "${a100_models[@]}"; do
     run_profiling "$model" 1 0 1 ${a100_models_edp[$model]:-false}
@@ -133,9 +133,10 @@ done
 
 # A4500 Models (smi-id 0, cuda-dev 1, depo-gpu 0)
 declare -A a4500_models_edp
+a4500_models_edp["tensorrt_a4500_llama_3_1_8b"]=true
 
 declare -a a4500_models=(
-    "tensorrt_a4500_llama_3_1_8b"
+    "tensorrt_a4500_llama_3_1_8b" "tensorrt_cnn_a4500_llama_3_1_8b"
 )
 for model in "${a4500_models[@]}"; do
     run_profiling "$model" 0 1 0 ${a4500_models_edp[$model]:-false}
