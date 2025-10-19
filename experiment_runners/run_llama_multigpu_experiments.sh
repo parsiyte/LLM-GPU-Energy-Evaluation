@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to run Qwen3-14B single and multi-GPU experiments.
+# Script to run Llama-3.1-8B single and multi-GPU experiments.
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
@@ -24,11 +24,11 @@ else
   YQ_BIN="$(pwd)/.tools/yq"
 fi
 
-# === Hugging Face login using token ===
-#if [ -z "$HF_TOKEN" ]; then
-#  echo "Hugging Face token not provided! Please set HF_TOKEN environment variable."
-#  exit 1
-#fi
+#=== Hugging Face login using token ===
+if [ -z "$HF_TOKEN" ]; then
+  echo "Hugging Face token not provided! Please set HF_TOKEN environment variable."
+  exit 1
+fi
 huggingface-cli login --token "$HF_TOKEN"
 
 # === Initial DEPO setup ===
@@ -164,6 +164,7 @@ run_experiments() {
 
     # === Phase 4: Consolidate Results ===
     echo "--- Consolidating results for $model_name ---"
+    local final_results_dir="${model_name}_results"
     mkdir -p "$final_results_dir"
     mv "$experiments_parent_dir"/* "$final_results_dir/"
     rm -r "$experiments_parent_dir"
@@ -174,10 +175,10 @@ run_experiments() {
 
 # --- Run Single-GPU Experiments ---
 # msTestPhasePeriod=12400
-run_experiments "qwen3_14b" "0" 12400 200
+run_experiments "vllama_3_1_8b" "0" 12400 200
 
 # --- Run Multi-GPU Experiments ---
 # msTestPhasePeriod=6400
-run_experiments "qwen3_14b_multigpu" "0,1" 6400 160
+run_experiments "vllama_3_1_8b_multi" "0,1" 6400 160
 
-echo "All Qwen3-14B experiments completed."
+echo "All Llama-3.1-8B experiments completed."
