@@ -5,8 +5,10 @@
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
+apt update
 pip install -U "huggingface_hub"
 apt install -y curl
+
 
 # === Ensure we have the correct yq (Mike Farah v4) ===
 # Prefer system yq if it's Mike Farah; otherwise download a local copy and use it.
@@ -110,7 +112,7 @@ run_experiments() {
     local start_time=$(date +%s)
     echo "Running DEPO --no-tuning..."
     CUDA_INJECTION64_PATH=$INJECTION_PATH \
-    ../../../split/build/apps/DEPO/DEPO --no-tuning --gpu $depo_gpu_args "$model_script" > "$output_file" 2>/dev/null
+    ../../../split/build/apps/DEPO/DEPO --no-tuning --gpu $depo_gpu_args "$model_script" 2>&1 | tee "$output_file"
     local end_time=$(date +%s)
     
     local total_time=$((end_time - start_time))
@@ -141,7 +143,7 @@ run_experiments() {
             
             rm -rf gpu_experiment_*; rm -f kernels_count redirected.txt average_result.csv power_log.csv power_log.png power_log_gpu*.csv power_log_gpu*.png result.csv summed_results.csv
             CUDA_INJECTION64_PATH=$INJECTION_PATH \
-            ../../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" > "${exp_folder_path}/EP_stdout" 2>&1
+            ../../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" 2>&1 | tee "${exp_folder_path}/EP_stdout"
             
             collect_results "$exp_folder_path" "$is_multigpu"
         done
@@ -158,7 +160,7 @@ run_experiments() {
 
         rm -rf gpu_experiment_*; rm -f kernels_count redirected.txt average_result.csv power_log.csv power_log.png power_log_gpu*.csv power_log_gpu*.png result.csv summed_results.csv
         CUDA_INJECTION64_PATH=$INJECTION_PATH \
-        ../../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" > "${exp_folder_path}/EP_stdout" 2>&1
+        ../../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" 2>&1 | tee "${exp_folder_path}/EP_stdout"
         
         collect_results "$exp_folder_path" "$is_multigpu"
     done
@@ -178,6 +180,6 @@ run_experiments() {
 
 # --- Run Single-GPU Experiments ---
 # msTestPhasePeriod=12400
-run_experiments "vllama_3_1_8b" "0" 12400 200
+run_experiments "vllama_3_1_8b" "0" 6400 200
 
 echo "All Llama-3.1-8B single-GPU experiments completed."
