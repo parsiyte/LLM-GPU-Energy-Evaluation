@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to run Llama-3.1-8B multi-GPU experiments only.
+# Script to run Qwen3-4B multi-GPU experiments only.
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
@@ -182,12 +182,12 @@ run_all_experiments() {
         echo "               STARTING RUN $i of 5              "
         echo "================================================="
 
-        run_experiments "vllama_3_1_8b_multi" "0,1" 6400 80
+        run_experiments "qwen3_4b_multi" "0,1" 6400 120
 
         # Move results to a run-specific folder
         local run_dir="run_$i"
         mkdir -p "$run_dir"
-        mv "vllama_3_1_8b_multi_results" "$run_dir/"
+        mv "qwen3_4b_multi_results" "$run_dir/"
         
         echo "Results for run $i saved in $run_dir"
         echo "================================================="
@@ -198,7 +198,8 @@ run_all_experiments() {
 }
 
 # --- Run Multi-GPU Experiments ---
+# NOTE: msTestPhasePeriod and periodic_time may need adjustment for Qwen3
 # msTestPhasePeriod=6400
 run_all_experiments
 
-echo "Llama-3.1-8B multi-GPU experiments completed."
+echo "Qwen3-4B multi-GPU experiments completed."
