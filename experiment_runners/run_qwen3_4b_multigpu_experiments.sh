@@ -1,14 +1,11 @@
 #!/bin/bash
-# Script to run Llama-3.1-8B single GPU experiments.
-# This script is a variant of run_llama_multigpu_experiments.sh,
-# specifically for a different DEPO executable path.
+# Script to run Qwen3-4B single and multi-GPU experiments.
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
 apt update
 #pip install -U "huggingface_hub"
 apt install -y curl
-
 
 # === Ensure we have the correct yq (Mike Farah v4) ===
 # Prefer system yq if it's Mike Farah; otherwise download a local copy and use it.
@@ -31,8 +28,8 @@ fi
 
 #=== Hugging Face login using token ===
 #if [ -z "$HF_TOKEN" ]; then
- # echo "Hugging Face token not provided! Please set HF_TOKEN environment variable."
-  #exit 1
+#  echo "Hugging Face token not provided! Please set HF_TOKEN environment variable."
+#  exit 1
 #fi
 #huggingface-cli login --token "$HF_TOKEN"
 
@@ -45,7 +42,7 @@ echo "Activating virtual environment..."
 source /data/lm-evaluation-harness/LLM-GPU-Energy-Evaluation/.venv/bin/activate
 
 # Define the injection path dynamically
-INJECTION_PATH="$(cd ../../.. && pwd)/split/profiling_injection/libinjection_2.so"
+INJECTION_PATH="$(cd ../.. && pwd)/split/profiling_injection/libinjection_2.so"
 
 # === Reboot GPU ===
 echo "Rebooting GPU..."
@@ -112,7 +109,7 @@ run_experiments() {
     local start_time=$(date +%s)
     echo "Running DEPO --no-tuning..."
     CUDA_INJECTION64_PATH=$INJECTION_PATH \
-    ../../../split/build/apps/DEPO/DEPO --no-tuning --gpu $depo_gpu_args "$model_script" 2>&1 | tee "$output_file"
+    ../../split/build/apps/DEPO/DEPO --no-tuning --gpu $depo_gpu_args "$model_script" 2>&1 | tee "$output_file"
     local end_time=$(date +%s)
     
     local total_time=$((end_time - start_time))
@@ -143,7 +140,7 @@ run_experiments() {
             
             rm -rf gpu_experiment_*; rm -f kernels_count redirected.txt average_result.csv power_log.csv power_log.png power_log_gpu*.csv power_log_gpu*.png result.csv summed_results.csv
             CUDA_INJECTION64_PATH=$INJECTION_PATH \
-            ../../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" 2>&1 | tee "${exp_folder_path}/EP_stdout"
+            ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" 2>&1 | tee "${exp_folder_path}/EP_stdout"
             
             collect_results "$exp_folder_path" "$is_multigpu"
         done
@@ -160,7 +157,7 @@ run_experiments() {
 
         rm -rf gpu_experiment_*; rm -f kernels_count redirected.txt average_result.csv power_log.csv power_log.png power_log_gpu*.csv power_log_gpu*.png result.csv summed_results.csv
         CUDA_INJECTION64_PATH=$INJECTION_PATH \
-        ../../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" 2>&1 | tee "${exp_folder_path}/EP_stdout"
+        ../../split/build/apps/DEPO/DEPO ${metrics[$metric]} --gss --gpu $depo_gpu_args "$model_script" 2>&1 | tee "${exp_folder_path}/EP_stdout"
         
         collect_results "$exp_folder_path" "$is_multigpu"
     done
@@ -179,7 +176,11 @@ run_experiments() {
 }
 
 # --- Run Single-GPU Experiments ---
-# msTestPhasePeriod=12400
-run_experiments "vllama_3_1_8b" "0" 6400 200
+# msTestPhasePeriod=6400
+run_experiments "qwen3_4b" "0" 6400 120
 
-echo "All Llama-3.1-8B single-GPU experiments completed."
+# --- Run Multi-GPU Experiments ---
+# msTestPhasePeriod=6400
+run_experiments "qwen3_4b_multi" "0,1" 6400 120
+
+echo "All Qwen3-4B experiments completed."
